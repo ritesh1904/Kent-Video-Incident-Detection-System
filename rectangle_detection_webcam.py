@@ -18,31 +18,23 @@ net = cv2.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
 outputLayer = net.getLayerNames()
 outputLayer = [outputLayer[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
-video = cv2.VideoCapture('toll.mp4')
-writer = None
+video_capture = cv2.VideoCapture(0)
+
 (W, H) = (None, None)
 
-try:
-    prop = cv2.CAP_PROP_FRAME_COUNT
-    total = int(video.get(prop))
-    print("[INFO] {} total frames in video".format(total))
-except:
-    print("Could not determine no. of frames in video")
-
-count = 0
 while True:
-    (ret, frame) = video.read()
-    if not ret:
-        break
+    ret, frame = video_capture.read()
+    frame = cv2.flip(frame, 1)
     if W is None or H is None:
         (H,W) = frame.shape[:2]
 
-    start_point = (900, 50)
-    end_point = (500, 500)
+    start_point = (400, 50)
+    end_point = (125, 400)
     color = (0, 0, 0)
     thickness = 1
     image = cv2.rectangle(frame, start_point, end_point, color, thickness)
-    crop_image = image[50:500,500:900]
+    crop_image = image[50:400,125:400]
+    (H, W) = crop_image.shape[:2]
 
     blob = cv2.dnn.blobFromImage(crop_image, 1 / 255.0, (416, 416), swapRB = True, crop = False)
     net.setInput(blob)
@@ -75,17 +67,14 @@ while True:
             (w, h) = (boxes[i][2], boxes[i][3])
 
             color = [int(c) for c in COLORS[classIDs[i]]]
-            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+            cv2.rectangle(crop_image, (x, y), (x + w, y + h), color, 2)
             text = '{}: {:.4f}'.format(labels[classIDs[i]], confidences[i])
-            cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            cv2.putText(crop_image, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-            if writer is None:
-                fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-                writer = cv2.VideoWriter('videoplayback.mp4_output.avi', fourcc, 30, (frame.shape[1], frame.shape[0]), True)
-    if writer is not None:
-        writer.write(frame)
-        print("Writing frame" , count+1)
-        count = count + 1
+    cv2.imshow('Output', frame)
+    if(cv2.waitKey(1) & 0xFF == ord('q')):
+        break
 
-writer.release()
-video.release()
+#Finally when video capture is over, release the video capture and destroyAllWindows
+video_capture.release()
+cv2.destroyAllWindows()

@@ -21,7 +21,12 @@ start_point = (50, 50)
 end_point = (400, 500)
 color = (0, 0, 0)
 thickness = 1
-image = cv2.rectangle(image, start_point, end_point, color, thickness)
+
+mid_point = ((50+400)/2,(50+500)/2)
+start_point_line = (50, 275)
+end_point_line = (400, 275)
+
+image = cv2.line(image, start_point_line, end_point_line, color, thickness)
 crop_image = image[50:500,50:400]
 (H, W) = crop_image.shape[:2]
 
